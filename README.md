@@ -1,1 +1,1 @@
-# Hakaton2024-autumn
+# Hakaton2024-18th
