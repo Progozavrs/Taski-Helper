@@ -3,6 +3,7 @@ var app = require('./init');
 var debug = require('debug')('node-test:server');
 var http = require('http');
 
+const database = require('./database');
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -12,8 +13,13 @@ var server = http.createServer(app);
 server.on('error', onError);
 server.on('listening', onListening);
 
-server.listen(port);
-    
+database.client.sync({alter:false})
+    .then(() => {
+        server.listen(port);
+    })
+    .catch(error => {
+        console.log(error);
+    });
 
 function normalizePort(val) {
     var port = parseInt(val, 10);

@@ -130,3 +130,4 @@ dist
 .pnp.*
 
 static/
+package-lock.json

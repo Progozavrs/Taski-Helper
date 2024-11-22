@@ -1,6 +1,7 @@
 var express = require('express');
 var cookieParser = require('cookie-parser');
-const path = require('path')
+const path = require('path');
+require('dotenv').config();
 
 
 // Создание Express-приложения
