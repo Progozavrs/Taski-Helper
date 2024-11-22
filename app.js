@@ -2,6 +2,7 @@
 var app = require('./init');
 var debug = require('debug')('node-test:server');
 var http = require('http');
+var fs = require('fs');
 
 const database = require('./database');
 

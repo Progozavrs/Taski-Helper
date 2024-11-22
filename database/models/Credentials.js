@@ -17,6 +17,11 @@ module.exports = (client, Sequelize, DataTypes) => {
             unique:         true,
             allowNull:      true,
         },
+        yandexID: {
+            type:           DataTypes.STRING,
+            unique:         true,
+            allowNull:      true,
+        },
     }, {});
 
     Table.beforeCreate((newObject, options) => {
