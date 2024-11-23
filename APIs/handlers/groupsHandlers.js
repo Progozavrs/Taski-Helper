@@ -45,6 +45,39 @@ module.exports.getGroups = function (req, res) {
     }); 
 };
 
+module.exports.getGroup = function (req, res) {
+    db.Groups.findOne({
+        where: {
+            UUID: req.params.groupUUID,
+        }
+    })
+    .then(async group => {
+        const inv = await group.getGroupInvitations({
+            include: {
+                model: db.Accesses,
+                as: 'invitationAccess',
+            }
+        });
+        if (group.credentialsUUID == res.locals.UUID) {
+            res.json({
+                group: group,
+                invitations: inv,
+            });
+            return;
+        }
+        else {
+            const my_inv = inv.filter(i => i.credentialsUUID == res.locals.UUID);
+            res.json({
+                group: group,
+                invitations: my_inv,
+            });
+        }
+    })
+    .catch(err => {
+        res.status(500).json(err.message);
+    });
+}
+
 module.exports.deleteGroup = function (req, res) {
     db.Groups.destroy({
         where: {

@@ -58,9 +58,10 @@ init.use((req, res, next) => {
 // Подключение роутера API
 init.use("/api", mainAPI);
 
+// Подключение SPA
 init.use(express.static(path.join(__dirname, "dist")));
 init.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+    res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 module.exports = init;

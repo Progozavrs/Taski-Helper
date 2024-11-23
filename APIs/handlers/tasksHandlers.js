@@ -148,3 +148,80 @@ module.exports.afterUploadFile = function (req, res) {
         res.status(500).json({ errors: errorsArray, dbError: err });
     });
 };
+
+module.exports.changeTask = function (req, res) {
+    const { taskUUID } = req.params;
+
+    db.Tasks.findOne({
+        where: {
+            UUID: taskUUID
+        },
+        include: {
+            model: db.Groups,
+            as: 'taskGroup', 
+            include: {
+                model: db.Invitations,
+                as: 'groupInvitations',
+                where: {
+                    credentialsUUID: res.locals.UUID
+                }, 
+                include: {
+                    model: db.Accesses,
+                    as: 'invitationAccess'
+                }
+            }
+        }
+    })
+    .then(task => {
+        if (!task) {
+            res.status(404).send('Задача не найдена');
+            return;
+        }
+        if (task.authorUUID != res.locals.UUID) {
+            if (task.taskGroup.groupInvitations.length === 0) {
+                res.status(403).send('У вас недостаточно прав на редактирование');
+                return;
+            }
+            if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Чтение') {
+                res.status(403).send('У вас недостаточно прав на редактирование');
+                return;
+            }
+            if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Только выполнение') {
+                db.Tasks.update({
+                    statusUUID: req.body.statusUUID
+                }, {
+                    where: {
+                        UUID: taskUUID,
+                    }
+                })
+                .then(() => {
+                    res.status(200).send('Статус задачи изменен');
+                })
+                .catch(err => {
+                    res.status(500).json(err.message);
+                });
+            }
+        }
+        else {
+            db.Tasks.update({
+                name: req.body.name,
+                description: req.body.description,
+                deadlineISO: req.body.deadlineISO,
+                statusUUID: req.body.statusUUID,
+            }, {
+                where: {
+                    UUID: taskUUID
+                }
+            })
+            .then(() => {
+                res.status(200).send('Задача изменена');
+            })
+            .catch(err => {
+                res.status(500).json(err.message);
+            });
+        }
+    })
+    .catch(err => {
+        res.status(500).json(err.message);
+    })
+}

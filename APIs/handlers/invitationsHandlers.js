@@ -18,24 +18,39 @@ module.exports.createInvitation = function (req, res) {
 module.exports.deleteInvitation = function (req, res) {
     const { invitationUUID } = req.params;
 
-    db.Invitations.destroy({
+    db.Invitations.findOne({
         where: {
-            invitationUUID: invitationUUID
+            UUID: invitationUUID
+        },
+        include: {
+            model: db.Groups,
+            as: 'invitationGroup'
         }
     })
-    .then((result) => {
-        if (!result) {
-            return res.status(404).json({
+    .then(data => {
+        if (!data) {
+            res.status(404).json({
                 message: 'Invitation не найден'
             });
+            return;
         }
-        res.status(200).json({
-            message: 'Invitation удален'
-        });
+
+        if (data.credentialsUUID !== res.locals.UUID && data.invitationGroup.credentialsUUID !== res.locals.UUID) {
+            res.status(403).json({
+                message: 'У вас нет прав на удаление этого Invitation'
+            });
+            return;
+        }
+
+        data.destroy()
+        .then(() => {
+            res.status(200).json({
+                message: 'Invitation было удалено'
+            });
+        })
     })
-    .catch((error) => {
+    .catch(error => {
         res.status(500).json({
-            message: 'Ошибка сервера',
             error: error.message
         });
     });
