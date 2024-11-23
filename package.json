@@ -4,11 +4,18 @@
   "description": "",
   "main": "init.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@nuxt/fonts": "^0.10.2",
+    "@nuxt/image": "^1.8.1",
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
     "connect-mongodb-session": "^5.0.0",
@@ -27,16 +34,22 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.0",
+    "nuxt": "^3.14.1592",
     "passport": "^0.7.0",
     "passport-telegram": "^1.0.0",
     "passport-vkontakte": "^0.5.0",
     "passport-yandex": "^0.0.5",
     "path": "^0.12.7",
     "pug": "^3.0.3",
+    "vue": "latest",
+    "vue-router": "latest",
     "sequelize": "^6.37.3",
     "serve-favicon": "^2.5.0",
     "socket.io": "^4.7.5",
     "uuid": "^10.0.0",
     "validator": "^13.12.0"
+  },
+  "devDependencies": {
+    "sass": "^1.81.0"
   }
 }
