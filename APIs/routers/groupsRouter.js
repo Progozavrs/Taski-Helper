@@ -5,4 +5,6 @@ router.post('/', groupsHandlers.createGroup);
 
 router.get('/', groupsHandlers.getGroups);
 
+router.delete('/:groupUUID', groupsHandlers.deleteGroup);
+
 module.exports = router;

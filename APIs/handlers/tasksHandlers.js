@@ -16,7 +16,7 @@ module.exports.createTask = function (req, res) {
         res.status(200).json(task);
     })
     .catch(err => {
-        res.status(500).json(err);
+        res.status(500).json(err.message);
     });
 }
 
@@ -40,7 +40,7 @@ module.exports.getMyTasks = function (req, res) {
         res.status(200).json(tasks);
     })
     .catch(err => {
-        res.status(500).json(err);
+        res.status(500).json(err.message);
     });
 };
 
@@ -64,7 +64,7 @@ module.exports.getGroupTasks = function (req, res) {
         res.status(200).json(tasks);
     })
     .catch(err => {
-        res.status(500).json(err);
+        res.status(500).json(err.message);
     });
 }
 
@@ -95,7 +95,7 @@ module.exports.beforeUploadFile = function (req, res, next) {
         next();
     })
     .catch(err => {
-        res.status(500).json(err);
+        res.status(500).json(err.message);
     });
 }
 

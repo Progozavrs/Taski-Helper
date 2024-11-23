@@ -10,7 +10,7 @@ module.exports.createGroup = function (req, res) {
         res.status(201).json(group);
     })
     .catch(err => {
-        res.status(400).json(err);
+        res.status(400).json(err.message);
     });
 }
 
@@ -41,7 +41,21 @@ module.exports.getGroups = function (req, res) {
         res.json(groups);
     })
     .catch(err => {
-        res.status(500).json(err);
-    });
-    
+        res.status(500).json(err.message);
+    }); 
 };
+
+module.exports.deleteGroup = function (req, res) {
+    db.Groups.destroy({
+        where: {
+            UUID: req.params.groupUUID,
+            credentialsUUID: res.locals.UUID,
+        }
+    })
+    .then(() => {
+        res.status(204).send();
+    })
+    .catch(err => {
+        res.status(500).json(err.message);
+    });
+}
