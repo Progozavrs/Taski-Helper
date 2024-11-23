@@ -1,6 +1,5 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const fs = require("fs");
 const path = require("path");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
@@ -26,7 +25,7 @@ store.on("error", function (error) {
 
 // Настройка cors политики
 const corsOptions = {
-  origin: ["https://taski-helper.mooo.com", process.env.FRONTEND_URL],
+  origin: '*',
   optionsSuccessStatus: 200,
 };
 init.use(cors(corsOptions));
@@ -35,22 +34,28 @@ init.use(cors(corsOptions));
 init.use(express.json());
 init.use(express.urlencoded({ extended: true }));
 init.use(cookieParser(process.env.COOKIE_KEY));
-init.use(
-  session({
+init.use(session({
     secret: process.env.SESSION_KEY,
     cookie: {
-      maxAge: Number(process.env.COOKIE_LIFETIME),
+        maxAge: 1000 * Number(process.env.AUTH_LIFETIME),
+        secure: true,
     },
     store: store,
     resave: true,
     saveUninitialized: true,
-  })
-);
+}));
 init.use(auths.passport.authenticate("session"));
 
 // Подключение роутера авторизации
 init.use("/auth", auths.router);
 
+// Извлечение UUID пользователя в res.locals.UUID
+init.use((req, res, next) => {
+    res.locals.UUID = req.signedCookies['auth_uuid'];
+    next();
+})
+
+// Подключение роутера API
 init.use("/api", mainAPI);
 
 init.use(express.static(path.join(__dirname, "dist")));

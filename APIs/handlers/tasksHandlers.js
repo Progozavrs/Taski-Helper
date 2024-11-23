@@ -9,7 +9,7 @@ module.exports.createTask = function (req, res) {
         deadlineISO: req.body.deadlineISO,
         fileLink: null,
         statusUUID: "552fc09c-a923-11ef-af6a-3cecef0f521e", // Назначено
-        author: req.user,
+        author: res.locals.UUID,
         group: req.body.group
     })
     .then(task => {
@@ -23,7 +23,7 @@ module.exports.createTask = function (req, res) {
 module.exports.getMyTasks = function (req, res) {
     db.Tasks.findAll({
         where: {
-            authorUID: req.user
+            authorUID: res.locals.UUID
         },
         include: [
             {
@@ -78,6 +78,30 @@ module.exports.afterUploadFile = function (req, res) {
         if (req.files?.["image"]?.[0]?.path) {
             fs.unlink(req.files["image"][0].path);
         }
+        res.status(500).json(err);
+    });
+}
+
+module.exports.getGroupTasks = function (req, res) {
+    db.Tasks.findAll({
+        where: {
+            groupUUID: req.params.groupUUID
+        },
+        include: [
+            {
+                model: db.Statuses,
+                as: 'taskStatus'
+            }, 
+            {
+                model: db.Groups,
+                as: 'taskGroup'
+            }
+        ]
+    })
+    .then(tasks => {
+        res.status(200).json(tasks);
+    })
+    .catch(err => {
         res.status(500).json(err);
     });
 }

@@ -5,7 +5,7 @@ module.exports.createInvitation = function (req, res) {
 
     db.Invitations.create({
         groupUUID: groupUUID,
-        credentialsUUID: invProfile.credentialsUUID,
+        credentialsUUID: credentialsUUID,
         accessUUID: accessUUID,
     })
     .then(invitation => {

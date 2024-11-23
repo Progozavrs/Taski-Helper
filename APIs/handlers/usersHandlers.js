@@ -24,7 +24,7 @@ module.exports.getMyProfile = function (req, res) {
             exclude: ['UUID', 'createdAt', 'updatedAt']
         },
         where: {
-            credentialsUUID: req.user,
+            credentialsUUID: res.locals.UUID,
         },
     })
     .then(user => {

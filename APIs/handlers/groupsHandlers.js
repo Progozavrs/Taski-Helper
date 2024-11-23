@@ -4,7 +4,7 @@ module.exports.createGroup = function (req, res) {
     db.Groups.create({
         name: req.body.name,
         description: req.body.description,
-        credentialsUUID: req.user,
+        credentialsUUID: res.locals.UUID,
     })
     .then(group => {
         res.status(201).json(group);
@@ -15,14 +15,14 @@ module.exports.createGroup = function (req, res) {
 }
 
 module.exports.getGroups = function (req, res) {
-    const myGroups = db.Groups.findOne({
+    const myGroups = db.Groups.findAll({
         where: {
-            credentialsUUID: req.user,
+            credentialsUUID: res.locals.UUID,
         },
     })
     const foreignGroups = db.Invitations.findAll({
         where: {
-            credentialsUUID: req.user,
+            credentialsUUID: res.locals.UUID,
         },
         include: [
             {
