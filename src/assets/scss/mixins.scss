@@ -1,0 +1,84 @@
+@use "./vars" as *;
+
+@mixin Logo {
+  font-size: 80px;
+  line-height: 64px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: $dark;
+  text-shadow: 0px 0px 50px $light;
+}
+
+@mixin Flex-VS {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 5px;
+}
+
+@mixin Flex-VC {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+}
+
+@mixin Flex-C {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+@mixin Flex-HC {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+@mixin Flex-HS {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 5px;
+}
+
+@mixin GlassBackground {
+  /* From https://css.glass */
+  background: $transparent-light;
+  border-radius: 10px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5.6px);
+  -webkit-backdrop-filter: blur(5.6px);
+  border: 1px solid rgba(189, 219, 208, 0.49);
+}
+
+@mixin Button {
+  min-width: 50px;
+  transition: 0.2s;
+  @media (hover: hover) {
+    &:hover {
+      background: $transparent-dark;
+      transform: scale(0.97);
+    }
+  }
+
+  &:active,
+  &.active {
+    background: $transparent-orange;
+    opacity: 0.8;
+  }
+}
+
+@mixin NormalText {
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: $dark;
+}
