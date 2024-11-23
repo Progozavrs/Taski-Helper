@@ -4,29 +4,17 @@
       <img src="../assets/img/home.svg" alt="Профиль" />
     </RouterLink>
 
-    <RouterLink
-      v-for="group in groups[0]"
-      :key="group.UUID"
-      :to="'/group/' + group.UUID"
-      class="button my group"
-      active-class="active"
-    >
-      {{ group.name }}
+    <RouterLink to="/group" class="button" active-class="active">
+      Мои пространства
     </RouterLink>
-    <RouterLink
-      v-for="group in groups[1]"
-      :key="group.invitationGroup.UUID"
-      :to="'/group/' + group.invitationGroup.UUID"
-      class="button other group"
-      active-class="active"
-    >
-      {{ group.invitationGroup.name }}
+
+    <RouterLink to="/profile/search" class="button" active-class="active">
+      Найти друга
     </RouterLink>
   </div>
 </template>
 
 <script setup>
-defineProps(["groups"]);
 </script>
 
 <style lang="scss" scoped>
@@ -48,14 +36,11 @@ defineProps(["groups"]);
 }
 
 .button {
+  flex: 1;
   @include NormalText;
   @include GlassBackground;
   @include Flex-C;
   @include Button;
-}
-
-.group {
-  min-width: 100px;
 }
 
 .button > img {

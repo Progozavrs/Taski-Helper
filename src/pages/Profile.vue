@@ -1,32 +1,57 @@
 <template>
   <div class="content">
-    <HeaderPanel :groups="userData.groups"></HeaderPanel>
+    <HeaderPanel></HeaderPanel>
     <div class="profile">
       <img
         v-if="userData.profile.photoUrl"
         :src="userData.profile.photoUrl"
         alt="Фото профиля"
       />
+
       <img v-else src="../assets/img/default.svg" alt="Фото профиля" />
+
       <div class="statistic">
         <div class="statuses">
           <h2>Статистика</h2>
-          {{ taskByStatuses }}
+          <p v-if="!userData.tasks.length">
+            У Вас еще нет никаких задач, чтобы вести статистику...
+          </p>
+          <p
+            v-else
+            v-for="(tasksArray, status) in taskByStatuses"
+            :key="status"
+          >
+            {{ status + ": " + tasksArray.length + "шт." }}
+          </p>
         </div>
+
         <div class="my groups">
           <h2>Мои рабочие пространства</h2>
+          <button class="button my group" @click="createGroup">
+            Создать пространство
+          </button>
+          <p v-if="!userData.groups[0]?.length">
+            Вы еще не создали ни одного своего пространства
+          </p>
           <RouterLink
+            v-else
             v-for="group in userData.groups[0]"
             :key="group.UUID"
             :to="'/group/' + group.UUID"
             class="button my group"
           >
-            {{ group.name }}
+            <span>{{ group.name }}</span>
+            <img src="../assets/img/delete.svg" alt="Удалить" />
           </RouterLink>
         </div>
+
         <div class="other groups">
           <h2>Доверенные рабочие пространства</h2>
+          <p v-if="!userData.groups[1]?.length">
+            К сожалению, Вам еще не доверили ни одного своего пространства :(
+          </p>
           <RouterLink
+            v-else
             v-for="group in userData.groups[1]"
             :key="group.invitationGroup.UUID"
             :to="'/group/' + group.invitationGroup.UUID"
@@ -40,6 +65,7 @@
             }}
           </RouterLink>
         </div>
+
         <a class="button logout" href="/auth/logout">
           <img src="../assets/img/logout.svg" alt="Выйти из аккаунта" />
         </a>
@@ -50,7 +76,6 @@
 
 <script setup>
 import { computed, reactive, onMounted } from "vue";
-import { useFetch } from "../fetch.js";
 import HeaderPanel from "../components/HeaderPanel.vue";
 
 const userData = reactive({
@@ -73,24 +98,41 @@ onMounted(() => {
     .then((json) => (userData.tasks = json));
 });
 
-const taskByStatuses = computed(() => {
-  const temp = {};
-  for (const task of userData.tasks) {
-    temp[task.taskStatus.name] = [...temp[task.taskStatus.name], task];
-  }
-  return temp;
+const taskByStatuses = computed({
+  get: () => {
+    const temp = reactive({});
+    for (const task of userData.tasks) {
+      temp[task.taskStatus.name] = [
+        ...(temp[task.taskStatus.name] ?? []),
+        task,
+      ];
+    }
+    return temp;
+  },
 });
+
+function createGroup() {
+  const name = prompt("Введите название пространства", "Новое простанство");
+  const description = prompt("Введите описание пространства", "Описание...");
+  fetch("https://taski-helper.mooo.com/api/groups", {
+    method: "POST",
+    body: JSON.stringify({
+      name: name,
+      description: description,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((res) => res.json())
+    .then((json) => userData.groups[0].push(json))
+    .catch((err) => alert(err));
+}
 </script>
 
 <style lang="scss" scoped>
 @use "../assets/scss/vars" as *;
 @use "../assets/scss/mixins" as *;
-
-html,
-body,
-#app {
-  @include Flex-VS;
-}
 
 .content {
   @include Flex-VS;
@@ -139,6 +181,14 @@ body,
 }
 
 .groups {
+  @include Flex-VS;
+}
+
+.my.group {
+  @include Flex-HS;
+}
+
+.statuses {
   @include Flex-VS;
 }
 </style>

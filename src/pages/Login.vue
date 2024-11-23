@@ -2,6 +2,7 @@
   <div class="content">
     <div class="container">
       <h1>TASKI</h1>
+
       <a href="https://taski-helper.mooo.com/auth/yandex">
         <img src="../assets/img/yandex.png" alt="Yandex" />
         <span>Войти через Yandex</span>

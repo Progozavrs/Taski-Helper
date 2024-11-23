@@ -1,13 +1,13 @@
 <template>
   <div class="content">
     <HeaderPanel></HeaderPanel>
-    Group
+    Search Profile
   </div>
 </template>
-  
-<script setup>
+    
+  <script setup>
 import HeaderPanel from "../components/HeaderPanel.vue";
 </script>
-  
-<style lang="scss" scoped>
+    
+  <style lang="scss" scoped>
 </style>
