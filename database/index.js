@@ -85,6 +85,37 @@ db.Tasks.belongsTo(db.Groups, {
     foreignKey: 'groupUUID',
     as: 'taskGroup'
 });
+// Invitations
+db.Groups.hasMany(db.Invitations, {
+    foreignKey: 'groupUUID',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    as: 'groupInvitations'
+});
+db.Invitations.belongsTo(db.Groups, {
+    foreignKey: 'groupUUID',
+    as: 'invitationGroup'
+});
+db.Credentials.hasMany(db.Invitations, {
+    foreignKey: 'credentialsUUID',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    as: 'userInvitations'
+});
+db.Invitations.belongsTo(db.Credentials, {
+    foreignKey: 'credentialsUUID',
+    as: 'invitationUser'
+});
+db.Accesses.hasMany(db.Invitations, {
+    foreignKey: 'accessUUID',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+    as: 'accessInvitations'
+});
+db.Invitations.belongsTo(db.Accesses, {
+    foreignKey: 'accessUUID',
+    as: 'invitationAccess'
+});
 // Subtasks
 db.Statuses.hasMany(db.Subtasks, {
     foreignKey: 'statusUUID',

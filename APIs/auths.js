@@ -72,6 +72,10 @@ passport.deserializeUser(function (user, cb) {
 
 // Стратегия авторизации через ВКонтакте
 
+// Стратегия авторизации через Телеграмм
+
+// Стратегия авторизации через ВКонтакте
+
 // Авторизация через Яндекс
 router.get("/yandex", passport.authenticate("yandex"));
 
@@ -116,6 +120,26 @@ router.get("/logout", (req, res) => {
       res.redirect("/");
     });
   });
+});
+
+// Авторизация через Телеграмм
+
+// Авторизация через ВКонтакте
+
+// Выход из аккаунта
+router.get('/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                return next(err);
+            }
+            res.clearCookie('connect.sid'); // Удаление куки
+            res.redirect('/');
+        });
+    });
 });
 
 module.exports.passport = passport;

@@ -14,7 +14,7 @@ var server = http.createServer(app);
 server.on('error', onError);
 server.on('listening', onListening);
 
-database.client.sync({alter:false})
+database.client.sync({alter:true})
     .then(() => {
         server.listen(port);
     })

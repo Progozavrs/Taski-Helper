@@ -1,10 +1,9 @@
 const db = require('../../database/index');
 
-module.exports.createGroup = (req, res) => {
-    const { name, description } = req.body;
+module.exports.createGroup = function (req, res) {
     db.Groups.create({
-        name: name,
-        description: description,
+        name: req.body.name,
+        description: req.body.description,
         credentialsUUID: req.user,
     })
     .then(group => {
@@ -15,27 +14,34 @@ module.exports.createGroup = (req, res) => {
     });
 }
 
-module.exports.getGroups = (req, res) => {
-    const myGroups = db.Groups.findAll({
+module.exports.getGroups = function (req, res) {
+    const myGroups = db.Groups.findOne({
         where: {
-            credentialsUUID: req.user.credentialsUUID
+            credentialsUUID: req.user,
         },
-        attributes: { 
-            exclude: ['credentialsUUID'] 
-        }
-    });
-    const foreignReadGroups = db.Groups.findAll({
-
-    });
-    const foreignUpdateGroups = db.Groups.findAll({
-
-    });
-    const promises = [myGroups, foreignReadGroups, foreignUpdateGroups];
+    })
+    const foreignGroups = db.Invitations.findAll({
+        where: {
+            credentialsUUID: req.user,
+        },
+        include: [
+            {
+                model: db.Accesses,
+                as: 'invitationAccess',
+            },
+            {
+                model: db.Groups,
+                as: 'invitationGroup',
+            }
+        ]
+    })
+    const promises = [myGroups, foreignGroups];
     Promise.all(promises)
     .then(groups => {
-        res.status(200).json(groups);
+        res.json(groups);
     })
     .catch(err => {
         res.status(500).json(err);
     });
+    
 };
