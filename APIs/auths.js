@@ -4,8 +4,6 @@ const YandexStrategy = require('passport-yandex').Strategy;
 const db = require('../database/index');
 const router = require('express').Router();
 
-// Настройка стратегий авторизации
-
 // Стратегия авторизации через Яндекс
 passport.use(new YandexStrategy({
     clientID: process.env.YANDEX_CLIENT_ID, 
@@ -65,6 +63,10 @@ passport.deserializeUser(function(user, cb) {
     });
 });
 
+// Стратегия авторизации через Телеграмм
+
+// Стратегия авторизации через ВКонтакте
+
 // Авторизация через Яндекс
 router.get('/yandex', passport.authenticate('yandex'));
 
@@ -75,10 +77,31 @@ router.get('/yandex/callback', passport.authenticate('yandex', {failureRedirect:
         }
     })
     .then(profile => {
-        res.status(200).redirect('/profile?uuid=' + profile.UUID);
+        res.status(200).redirect(`/profile/${profile.UUID}`);
     })
     .catch(err => {
+        console.log(err);
         res.status(404).redirect('/');
+    });
+});
+
+// Авторизация через Телеграмм
+
+// Авторизация через ВКонтакте
+
+// Выход из аккаунта
+router.get('/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                return next(err);
+            }
+            res.clearCookie('connect.sid'); // Удаление куки
+            res.redirect('/');
+        });
     });
 });
 

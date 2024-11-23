@@ -1,58 +1,48 @@
-const express = require('express');
-const cookieParser = require('cookie-parser');
-const fs = require('fs');
-const path = require('path');
-const session = require('express-session');
-const MongoDBStore = require('connect-mongodb-session')(session);
-require('dotenv').config();
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const fs = require("fs");
+const path = require("path");
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
+require("dotenv").config();
 
 // Роутер авторизации
-const auths = require('./APIs/auths');
+const auths = require("./APIs/auths");
 // Роутер API
-const mainAPI = require('./APIs/mainAPI');
+const mainAPI = require("./APIs/mainAPI");
 
 // Создание Express-приложения
 const init = express();
 
 // Настройка сессий в MongoDB
 const store = new MongoDBStore({
-    uri: `mongodb://mo6248_taski:${process.env.MONGODB_PASSWORD}@mongo7.serv00.com:27017/mo6248_taski`,
-    collection: 'mySessions'
+  uri: `mongodb://mo6248_taski:${process.env.MONGODB_PASSWORD}@mongo7.serv00.com:27017/mo6248_taski`,
+  collection: "mySessions",
 });
-store.on('error', function(error) {
-    console.log(error);
+store.on("error", function (error) {
+  console.log(error);
 });
 
 // Настройка Express-приложения
 init.use(express.json());
 init.use(express.urlencoded({ extended: true }));
 init.use(cookieParser(process.env.COOKIE_KEY));
-init.use(session({
+init.use(
+  session({
     secret: process.env.SESSION_KEY,
     cookie: {
-        maxAge: Number(process.env.COOKIE_LIFETIME),
+      maxAge: Number(process.env.COOKIE_LIFETIME),
     },
     store: store,
     resave: true,
-    saveUninitialized: true
-}));
-init.use(auths.passport.authenticate('session'));
+    saveUninitialized: true,
+  })
+);
+init.use(auths.passport.authenticate("session"));
 
 // Подключение роутера авторизации
-init.use('/auth', auths.router);
+init.use("/auth", auths.router);
 
-init.use('/api', mainAPI)
-
-// Подключение SPA
-// init.use((req, res, next) => {
-//     if (req.url.indexOf('.') == -1) {
-//         req.url = '/';
-//     }
-//     next();
-// });
-init.use(express.static(path.join(__dirname, 'dist')));
-init.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+init.use("/api", mainAPI);
 
 module.exports = init;
