@@ -15,6 +15,32 @@ module.exports.createInvitation = function (req, res) {
     })
 };
 
+module.exports.deleteInvitation = function (req, res) {
+    const { invitationUUID } = req.params;
+
+    db.Invitations.destroy({
+        where: {
+            invitationUUID: invitationUUID
+        }
+    })
+    .then((result) => {
+        if (!result) {
+            return res.status(404).json({
+                message: 'Invitation не найден'
+            });
+        }
+        res.status(200).json({
+            message: 'Invitation удален'
+        });
+    })
+    .catch((error) => {
+        res.status(500).json({
+            message: 'Ошибка сервера',
+            error: error.message
+        });
+    });
+}
+
 module.exports.getGroupInvitations = function (req, res) {
     const { groupUUID } = req.params;
 
@@ -29,4 +55,33 @@ module.exports.getGroupInvitations = function (req, res) {
             invitations: invitations
         });
     })
+}
+
+module.exports.changeInvitationAccess = function (req, res) {
+    const { invitationUUID } = req.params;
+    const { accessUUID } = req.body;
+
+    db.Invitations.update({
+        accessUUID: accessUUID
+    }, {
+        where: {
+            invitationUUID: invitationUUID
+        }
+    })
+    .then((result) => {
+        if (!result) {
+            return res.status(404).json({
+                message: 'Invitation не найдено'
+            });
+        }
+        res.status(200).json({
+            message: 'Права доступа Invitation были обновлены'
+        });
+    })
+    .catch((error) => {
+        res.status(500).json({
+            message: 'Ошибка сервера',
+            error: error.message
+        });
+    });
 }
