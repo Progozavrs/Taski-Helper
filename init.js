@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
+const cors = require("cors");
 require("dotenv").config();
 
 // Роутер авторизации
@@ -22,6 +23,13 @@ const store = new MongoDBStore({
 store.on("error", function (error) {
   console.log(error);
 });
+
+// Настройка cors политики
+const corsOptions = {
+  origin: ["https://taski-helper.mooo.com", process.env.FRONTEND_URL],
+  optionsSuccessStatus: 200,
+};
+init.use(cors(corsOptions));
 
 // Настройка Express-приложения
 init.use(express.json());
@@ -44,5 +52,10 @@ init.use(auths.passport.authenticate("session"));
 init.use("/auth", auths.router);
 
 init.use("/api", mainAPI);
+
+init.use(express.static(path.join(__dirname, "dist")));
+init.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 module.exports = init;
