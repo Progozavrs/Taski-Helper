@@ -92,3 +92,36 @@ module.exports.deleteGroup = function (req, res) {
         res.status(500).json(err.message);
     });
 }
+
+module.exports.updateGroup = function (req, res) {
+    db.Groups.findOne({
+        where: {
+            UUID: req.params.groupUUID,
+            credentialsUUID: res.locals.UUID,
+        }
+    })
+    .then(group => {
+        if (!group) {
+            res.status(404).send('Группа не найдена');
+            return;
+        }
+        if (group.credentialsUUID != res.locals.UUID) {
+            res.status(403).send('У вас недостаточно прав на редактирование');
+            return;
+        }
+        db.Groups.update({
+            name: req.body.name,
+            description: req.body.description,
+        }, {
+            where: {
+                UUID: req.params.groupUUID,
+            }
+        })
+        .then(() => {
+            res.status(200).send('Группа обновлена');
+        })
+        .catch(err => {
+            res.status(500).json(err.message);
+        });
+    })
+}

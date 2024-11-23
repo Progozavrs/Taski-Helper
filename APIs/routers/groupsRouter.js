@@ -9,4 +9,6 @@ router.get('/:groupUUID', groupsHandlers.getGroup);
 
 router.delete('/:groupUUID', groupsHandlers.deleteGroup);
 
+router.put('/:groupUUID', groupsHandlers.updateGroup);
+
 module.exports = router;

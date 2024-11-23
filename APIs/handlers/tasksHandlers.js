@@ -8,7 +8,7 @@ module.exports.createTask = function (req, res) {
         description: req.body.description,
         deadlineISO: req.body.deadlineISO,
         fileLink: null,
-        statusUUID: "552fc09c-a923-11ef-af6a-3cecef0f521e", // Назначено
+        statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
         author: res.locals.UUID,
         group: req.body.group
     })
