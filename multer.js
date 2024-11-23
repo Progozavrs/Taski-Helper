@@ -31,7 +31,9 @@ const fileStorage = multer.diskStorage({
         cb(null, path.join('static'));
     },
     filename: function (req, file, cb) {
-        cb(null, req.body.taskUUID + path.extname(file.originalname));
+        // Получаем индекс файла из массива файлов
+        const fileIndex = req.files['file'].indexOf(file) + 1;
+        cb(null, `${req.body.taskUUID}-${fileIndex}${path.extname(file.originalname)}`);
     }
 });
 // Настройка Multer загрузчика для pdf файлов
@@ -40,6 +42,5 @@ module.exports.fileUploader = multer({
     limits: { fileSize: maxSize },
     fileFilter: fileFilter
 }).fields([
-    { name: 'taskUUID', maxCount: 1},
-    { name: 'file', maxCount: 1}
-])
+    { name: 'file', maxCount: 5 }
+]);

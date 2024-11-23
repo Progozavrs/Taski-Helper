@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const path = require("path");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
+const cors = require("cors");
 require("dotenv").config();
 
 // Роутер авторизации
