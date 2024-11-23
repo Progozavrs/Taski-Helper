@@ -81,3 +81,27 @@ module.exports.afterUploadFile = function (req, res) {
         res.status(500).json(err);
     });
 }
+
+module.exports.getGroupTasks = function (req, res) {
+    db.Tasks.findAll({
+        where: {
+            groupUUID: req.params.groupUUID
+        },
+        include: [
+            {
+                model: db.Statuses,
+                as: 'taskStatus'
+            }, 
+            {
+                model: db.Groups,
+                as: 'taskGroup'
+            }
+        ]
+    })
+    .then(tasks => {
+        res.status(200).json(tasks);
+    })
+    .catch(err => {
+        res.status(500).json(err);
+    });
+}

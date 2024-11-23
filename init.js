@@ -1,10 +1,8 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const fs = require("fs");
 const path = require("path");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
-const cors = require("cors");
 require("dotenv").config();
 
 // Роутер авторизации
@@ -24,13 +22,6 @@ store.on("error", function (error) {
   console.log(error);
 });
 
-// Настройка cors политики
-const corsOptions = {
-  origin: ["https://taski-helper.mooo.com", process.env.FRONTEND_URL],
-  optionsSuccessStatus: 200,
-};
-init.use(cors(corsOptions));
-
 // Настройка Express-приложения
 init.use(express.json());
 init.use(express.urlencoded({ extended: true }));
@@ -39,7 +30,7 @@ init.use(
   session({
     secret: process.env.SESSION_KEY,
     cookie: {
-      maxAge: Number(process.env.COOKIE_LIFETIME),
+      maxAge: 1000 * Number(process.env.AUTH_LIFETIME),
     },
     store: store,
     resave: true,

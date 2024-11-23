@@ -82,7 +82,7 @@ router.get("/yandex", passport.authenticate("yandex"));
 router.get(
   "/yandex/callback",
   passport.authenticate("yandex", {
-    failureRedirect: process.env.FRONTEND_URL,
+    failureRedirect: '/',
   }),
   (req, res) => {
     db.Profiles.findOne({
@@ -93,11 +93,11 @@ router.get(
       .then((profile) => {
         res
           .status(200)
-          .redirect(`${process.env.FRONTEND_URL}/profile/${profile.UUID}`);
+          .redirect(`/profile/${profile.UUID}`);
       })
       .catch((err) => {
         console.log(err);
-        res.status(404).redirect(process.env.FRONTEND_URL);
+        res.status(404).redirect('/');
       });
   }
 );
@@ -120,26 +120,6 @@ router.get("/logout", (req, res) => {
       res.redirect("/");
     });
   });
-});
-
-// Авторизация через Телеграмм
-
-// Авторизация через ВКонтакте
-
-// Выход из аккаунта
-router.get('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            return next(err);
-        }
-        req.session.destroy((err) => {
-            if (err) {
-                return next(err);
-            }
-            res.clearCookie('connect.sid'); // Удаление куки
-            res.redirect('/');
-        });
-    });
 });
 
 module.exports.passport = passport;
