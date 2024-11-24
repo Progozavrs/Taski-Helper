@@ -1,5 +1,6 @@
 const passport = require("passport");
 const YandexStrategy = require("passport-yandex").Strategy;
+const VkontakteStrategy = require('passport-vkontakte').Strategy;
 
 const db = require("../database/index");
 const router = require("express").Router();
@@ -30,7 +31,6 @@ passport.use(new YandexStrategy({
 						credentialsUUID: newUser.UUID, // FK на созданного пользователя
 						firstName: profile.name.givenName,
 						lastName: profile.name.familyName,
-						patronymic: profile.name.middleName || "", // Если нет отчества, оставляем пустым
 						email: profile.emails[0].value,
 						photoURL: profile.photos[0].value,
 					})
@@ -48,6 +48,50 @@ passport.use(new YandexStrategy({
 	  	});
 	}
 ));
+
+// Стратегия авторизации через ВКонтакте
+passport.use(new VkontakteStrategy({
+    clientID: Number(process.env.VK_CLIENT_ID),
+    clientSecret: process.env.VK_CLIENT_SECRET,
+    callbackURL: "https://taski-helper.mooo.com/auth/vk/callback",
+}, 
+function (accessToken, refreshToken, params, profile, done) {
+    db.Credentials.findOne({
+        where: {
+            vkID: profile.id,
+        },
+    })
+    .then((user) => {
+        if (user) {
+            return done(null, user.UUID);
+        } 
+		else {
+            db.Credentials.create({
+                vkID: profile.id,
+            })
+            .then((newUser) => {
+                // Создаем профиль с данными из profile пользователя
+                db.Profiles.create({
+                    credentialsUUID: newUser.UUID,
+                    firstName: profile.name.givenName,
+                    lastName: profile.name.familyName,
+                    photoUrl: profile.photos[0].value,
+                })
+                .then((newProfile) => {
+                    return done(null, newUser.UUID);
+                })
+                .catch((err) => {
+                    return done(err, null);
+                });
+            })
+            .catch((err) => {
+                return done(err, null);
+            });
+        }
+    });
+}));
+
+// Сериализация и десериализация пользователя
 passport.serializeUser((user, cb) => {
 	process.nextTick(function () {
 		return cb(null, user);
@@ -67,8 +111,6 @@ passport.deserializeUser(function (user, cb) {
 	});
 });
 
-// Стратегия авторизации через ВКонтакте
-
 // Авторизация через Яндекс
 router.get("/yandex", passport.authenticate("yandex"));
 
@@ -82,6 +124,16 @@ router.get("/yandex/callback", passport.authenticate("yandex", { failureRedirect
 });
 
 // Авторизация через ВКонтакте
+router.get("/vk", passport.authenticate("vkontakte"));
+
+router.get("/vk/callback", passport.authenticate("vkontakte", { failureRedirect: "/" }), (req, res) => {
+	res.cookie('auth_uuid', req.user, { 
+		signed: true, 
+		httpOnly: false,
+		maxAge: 1000 * Number(process.env.AUTH_LIFETIME),
+	});
+	res.status(200).redirect(`/profile`);
+});
 
 // Выход из аккаунта
 router.get("/logout", (req, res) => {

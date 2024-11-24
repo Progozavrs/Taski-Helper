@@ -17,11 +17,6 @@ module.exports = (client, Sequelize, DataTypes) => {
             unique:         false,
             allowNull:      false,
         },
-        patronymic: {
-            type:           DataTypes.STRING,
-            unique:         false,
-            allowNull:      true,
-        },
         email: {
             type:           DataTypes.STRING,
             unique:         false,

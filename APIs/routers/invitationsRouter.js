@@ -5,4 +5,6 @@ router.post('/', invitationsHandlers.createInvitation);
 
 router.get('/:groupUUID', invitationsHandlers.getGroupInvitations);
 
+router.delete('/:invitationUUID', invitationsHandlers.deleteInvitation);
+
 module.exports = router;

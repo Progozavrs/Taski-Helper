@@ -34,3 +34,36 @@ module.exports.getMyProfile = function (req, res) {
         res.status(500).json({ message: 'Ошибка сервера' });
     });
 }
+
+module.exports.findCredentials = function (req, res) {
+    const firstName = req.query.firstName;
+    const lastName = req.query.lastName;
+    db.Profiles.findOne({
+        where: {
+            firstName: {
+                [db.Op.like]: `%${firstName}%`
+            },
+            lastName: {
+                [db.Op.like]: `%${lastName}%`
+            }
+        },
+        include: {
+            model: db.Credentials,
+            as: 'userCredentials',
+        }
+    })
+    .then(user => {
+        if (user) {
+            res.json({
+                user: user,
+                message: "OK"
+            });
+        } 
+        else {
+            res.json({
+                user: null,
+                message: 'Пользователь с такими ФИ не найден' 
+            });
+        }
+    })
+}

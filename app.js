@@ -5,6 +5,7 @@ var http = require('http');
 var fs = require('fs');
 
 const database = require('./database');
+const updateTasks = require('./APIs/handlers/variousHandlers').updateStatusByDeadlineISO;
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
@@ -63,6 +64,7 @@ function onError(error) {
 }
 
 function onListening() {
+    setInterval(updateTasks, 1000 * 60 * 2);
     var addr = server.address();
     var bind = typeof addr === 'string'
         ? 'pipe ' + addr

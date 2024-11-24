@@ -7,11 +7,6 @@ module.exports = (client, Sequelize, DataTypes) => {
             allowNull:      false,
             defaultValue:   Sequelize.UUIDV4,
         },
-        telegramID: {
-            type:           DataTypes.STRING,
-            unique:         true,
-            allowNull:      true,
-        },
         vkID: {
             type:           DataTypes.STRING,
             unique:         true,
