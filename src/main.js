@@ -40,6 +40,7 @@ const routes = [
     path: "/profile/search",
     name: "searchProfile",
     component: SearchProfile,
+    meta: { requiresAuth: true },
   },
   {
     path: "/group",

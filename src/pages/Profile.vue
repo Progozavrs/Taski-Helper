@@ -13,6 +13,7 @@
       <div class="statistic">
         <div class="statuses">
           <h2>Статистика</h2>
+
           <p v-if="!userData.tasks.length">
             У Вас еще нет никаких задач, чтобы вести статистику...
           </p>
@@ -27,7 +28,7 @@
 
         <div class="my groups">
           <h2>Мои рабочие пространства</h2>
-          <button class="button my group" @click="createGroup">
+          <button class="button my new group" @click="createGroup">
             Создать пространство
           </button>
           <p v-if="!userData.groups[0]?.length">
@@ -41,7 +42,11 @@
             class="button my group"
           >
             <span>{{ group.name }}</span>
-            <img src="../assets/img/delete.svg" alt="Удалить" />
+            <img
+              src="../assets/img/delete.svg"
+              alt="Удалить"
+              @click.prevent="deleteGroup(group.UUID)"
+            />
           </RouterLink>
         </div>
 
@@ -54,7 +59,12 @@
             v-else
             v-for="group in userData.groups[1]"
             :key="group.invitationGroup.UUID"
-            :to="'/group/' + group.invitationGroup.UUID"
+            :to="
+              '/group/' +
+              group.invitationGroup.UUID +
+              '?access=' +
+              group.invitationAccess.name
+            "
             class="button other group"
           >
             {{
@@ -87,15 +97,18 @@ const userData = reactive({
 onMounted(() => {
   fetch("https://taski-helper.mooo.com/api/groups")
     .then((res) => res.json())
-    .then((json) => (userData.groups = json));
+    .then((json) => (userData.groups = json))
+    .catch((err) => alert(err.message));
 
   fetch("https://taski-helper.mooo.com/api/users")
     .then((res) => res.json())
-    .then((json) => (userData.profile = json));
+    .then((json) => (userData.profile = json))
+    .catch((err) => alert(err.message));
 
   fetch("https://taski-helper.mooo.com/api/tasks/my")
     .then((res) => res.json())
-    .then((json) => (userData.tasks = json));
+    .then((json) => (userData.tasks = json))
+    .catch((err) => alert(err.message));
 });
 
 const taskByStatuses = computed({
@@ -114,19 +127,37 @@ const taskByStatuses = computed({
 function createGroup() {
   const name = prompt("Введите название пространства", "Новое простанство");
   const description = prompt("Введите описание пространства", "Описание...");
-  fetch("https://taski-helper.mooo.com/api/groups", {
-    method: "POST",
-    body: JSON.stringify({
-      name: name,
-      description: description,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((res) => res.json())
-    .then((json) => userData.groups[0].push(json))
-    .catch((err) => alert(err));
+
+  if (name && description) {
+    fetch("https://taski-helper.mooo.com/api/groups", {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        description: description,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((json) => userData.groups[0].push(json))
+      .catch((err) => alert(err.message));
+  }
+}
+
+function deleteGroup(UUID) {
+  if (confirm("Вы уверены, что хотите удалить это пространство?")) {
+    fetch(`https://taski-helper.mooo.com/api/groups/${UUID}`, {
+      method: "DELETE",
+    })
+      .then(
+        (res) =>
+          (userData.groups[0] = userData.groups[0].filter(
+            (item) => item.UUID !== UUID
+          ))
+      )
+      .catch((err) => alert(err.message));
+  }
 }
 </script>
 
@@ -185,7 +216,16 @@ function createGroup() {
 }
 
 .my.group {
-  @include Flex-HS;
+  padding: 0px 10px;
+  @include Flex-HC;
+}
+
+.my.group:has(img:hover) {
+  background: $transparent-orange;
+}
+
+.my.new.group {
+  @include Flex-C;
 }
 
 .statuses {

@@ -8,6 +8,12 @@
         <span>Войти через Yandex</span>
         <img src="../assets/img/yandex.png" alt="Yandex" />
       </a>
+
+      <a href="https://taski-helper.mooo.com/auth/vk">
+        <img src="../assets/img/vk.png" alt="VK" />
+        <span>Войти через VK</span>
+        <img src="../assets/img/vk.png" alt="VK" />
+      </a>
     </div>
   </div>
 </template>

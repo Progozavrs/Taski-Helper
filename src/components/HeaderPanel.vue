@@ -9,7 +9,7 @@
     </RouterLink>
 
     <RouterLink to="/profile/search" class="button" active-class="active">
-      Найти друга
+      Поиск профилей
     </RouterLink>
   </div>
 </template>
