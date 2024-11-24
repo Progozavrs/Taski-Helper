@@ -40,8 +40,12 @@ module.exports.findCredentials = function (req, res) {
     const lastName = req.query.lastName;
     db.Profiles.findOne({
         where: {
-            firstName: firstName,
-            lastName: lastName,
+            firstName: {
+                [db.Op.like]: `%${firstName}%`
+            },
+            lastName: {
+                [db.Op.like]: `%${lastName}%`
+            }
         },
         include: {
             model: db.Credentials,

@@ -49,14 +49,37 @@ module.exports.getGroup = function (req, res) {
     db.Groups.findOne({
         where: {
             UUID: req.params.groupUUID,
+        },
+        include: {
+            model: db.Tasks,
+            as: 'groupTasks',
+            include: [{
+                model: db.Statuses,
+                as: 'taskStatus',
+            }, {
+                model: db.Credentials,
+                as: 'taskAuthor',
+                attributes: [ 'UUID' ], 
+                include: {
+                    model: db.Profiles,
+                    as: 'userProfile'
+                }
+            }]
         }
     })
     .then(async group => {
         const inv = await group.getGroupInvitations({
-            include: {
+            include: [{
                 model: db.Accesses,
                 as: 'invitationAccess',
-            }
+            }, {
+                model: db.Credentials,
+                as: 'invitationUser',
+                include: {
+                    model: db.Profiles,
+                    as: 'userProfile',
+                }
+            }]
         });
         if (group.credentialsUUID == res.locals.UUID) {
             res.json({

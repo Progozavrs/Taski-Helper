@@ -9,11 +9,23 @@ module.exports.createTask = function (req, res) {
         deadlineISO: req.body.deadlineISO,
         fileLink: null,
         statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
-        author: res.locals.UUID,
-        group: req.body.group
+        authorUUID: res.locals.UUID,
+        groupUUID: req.body.groupUUID
     })
-    .then(task => {
-        res.status(200).json(task);
+    .then(async task => {
+        const author = await task.getTaskAuthor({
+            attributes: [ 'UUID' ],
+            include: {
+                model: db.Profiles,
+                as: 'userProfile'
+            }
+        });
+        const status = await task.getTaskStatus();
+        res.status(200).json({
+            ...task.dataValues,
+            taskAuthor: author,
+            taskStatus: status
+        });
     })
     .catch(err => {
         res.status(500).json(err.message);
@@ -32,7 +44,7 @@ module.exports.getMyTasks = function (req, res) {
             }, 
             {
                 model: db.Groups,
-                as: 'taskGroup'
+                as: 'taskGroup',
             }
         ]
     })
@@ -57,7 +69,7 @@ module.exports.getGroupTasks = function (req, res) {
             {
                 model: db.Groups,
                 as: 'taskGroup'
-            }
+            },
         ]
     })
     .then(tasks => {

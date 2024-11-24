@@ -19,11 +19,11 @@ module.exports.updateStatusByDeadlineISO = function () {
         statusUUID: "dca6d4c1-a9a3-11ef-af6a-3cecef0f521e" 
     }, {
         where: {
-            deadline: {
+            deadlineISO: {
                 [db.Op.lt]: new Date().toISOString()
             },
             statusUUID: {
-                [db.Op.ne]: 'd2e2d083-a9a3-11ef-af6a-3cecef0f521e'
+                [db.Op.notIn]: ['dca6d4c1-a9a3-11ef-af6a-3cecef0f521e', '7e05098f-a9df-11ef-af6a-3cecef0f521e']
             }
         }
     })

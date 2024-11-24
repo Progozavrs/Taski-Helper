@@ -31,9 +31,7 @@ const fileStorage = multer.diskStorage({
         cb(null, path.join('static'));
     },
     filename: function (req, file, cb) {
-        // Получаем индекс файла из массива файлов
-        const fileIndex = req.files['file'].indexOf(file) + 1;
-        cb(null, `${req.body.taskUUID}-${fileIndex}${path.extname(file.originalname)}`);
+        cb(null, file.originalname);
     }
 });
 // Настройка Multer загрузчика для pdf файлов

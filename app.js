@@ -64,7 +64,7 @@ function onError(error) {
 }
 
 function onListening() {
-    setInterval(updateTasks, 1000 * 60 * 10);
+    setInterval(updateTasks, 1000 * 60 * 2);
     var addr = server.address();
     var bind = typeof addr === 'string'
         ? 'pipe ' + addr
