@@ -2,8 +2,14 @@
   <div class="content">
     <HeaderPanel></HeaderPanel>
     <div class="my groups">
-      <h2>Мои рабочие пространства</h2>
-      <button class="button my new group" @click="createGroup">
+      <h2 v-if="!$route.query.mode">Мои рабочие пространства</h2>
+      <h2 v-if="$route.query.mode">Выберите рабочее пространство</h2>
+
+      <button
+        v-if="!$route.query.mode"
+        class="button my new group"
+        @click="createGroup"
+      >
         Создать пространство
       </button>
       <p v-if="!userData.groups[0]?.length">
@@ -18,14 +24,28 @@
       >
         <span>{{ group.name }}</span>
         <img
+          v-if="!$route.query.mode"
           src="../assets/img/delete.svg"
           alt="Удалить"
           @click.prevent="deleteGroup(group.UUID)"
         />
+        <div
+          v-if="$route.query.mode == 'invitation'"
+          class="invitation"
+          @click.prevent="
+            inviteUser(
+              group.UUID,
+              $route.query.userUUID,
+              $route.query.accessUUID
+            )
+          "
+        >
+          <img src="../assets/img/add.svg" alt="Добавить" />
+        </div>
       </RouterLink>
     </div>
 
-    <div class="other groups">
+    <div v-if="!$route.query.mode" class="other groups">
       <h2>Доверенные рабочие пространства</h2>
       <p v-if="!userData.groups[1]?.length">
         К сожалению, Вам еще не доверили ни одного своего пространства :(
@@ -53,6 +73,9 @@
 <script setup>
 import { computed, reactive, onMounted } from "vue";
 import HeaderPanel from "../components/HeaderPanel.vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const userData = reactive({
   groups: [],
@@ -61,12 +84,26 @@ const userData = reactive({
 
 onMounted(() => {
   fetch("https://taski-helper.mooo.com/api/groups")
-    .then((res) => res.json())
+    .then(async (res) => {
+      if (res.status < 300) {
+        return res.json();
+      } else {
+        const message = await res.json();
+        throw new Error(message);
+      }
+    })
     .then((json) => (userData.groups = json))
     .catch((err) => alert(err.message));
 
   fetch("https://taski-helper.mooo.com/api/tasks/my")
-    .then((res) => res.json())
+    .then(async (res) => {
+      if (res.status < 300) {
+        return res.json();
+      } else {
+        const message = await res.json();
+        throw new Error(message);
+      }
+    })
     .then((json) => (userData.tasks = json))
     .catch((err) => alert(err.message));
 });
@@ -86,7 +123,14 @@ function createGroup() {
         "Content-Type": "application/json",
       },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (res.status < 300) {
+          return res.json();
+        } else {
+          const message = await res.json();
+          throw new Error(message);
+        }
+      })
       .then((json) => userData.groups[0].push(json))
       .catch((err) => alert(err.message));
   }
@@ -97,6 +141,14 @@ function deleteGroup(UUID) {
     fetch(`https://taski-helper.mooo.com/api/groups/${UUID}`, {
       method: "DELETE",
     })
+      .then(async (res) => {
+        if (res.status < 300) {
+          return res.json();
+        } else {
+          const message = await res.json();
+          throw new Error(message);
+        }
+      })
       .then(
         (res) =>
           (userData.groups[0] = userData.groups[0].filter(
@@ -105,6 +157,29 @@ function deleteGroup(UUID) {
       )
       .catch((err) => alert(err.message));
   }
+}
+
+function inviteUser(groupUUID, userUUID, accessUUID) {
+  fetch("https://taski-helper.mooo.com/api/invitations", {
+    method: "POST",
+    body: JSON.stringify({
+      groupUUID: groupUUID,
+      credentialsUUID: userUUID,
+      accessUUID: accessUUID,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then(async (res) => {
+      if (res.ok) {
+        router.push(`/group/${groupUUID}`);
+      } else {
+        const message = await res.json();
+        throw new Error(message);
+      }
+    })
+    .catch((err) => alert(err.message));
 }
 </script>
   
@@ -146,5 +221,15 @@ function deleteGroup(UUID) {
 
 .my.new.group {
   @include Flex-C;
+}
+
+.invitation {
+  flex: 1;
+  @include Flex-C;
+  align-items: flex-start;
+}
+
+.invitation > img {
+  height: 30px;
 }
 </style>

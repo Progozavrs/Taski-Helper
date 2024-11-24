@@ -9,7 +9,10 @@
       <p class="description">{{ data.groupInfo.group.description }}</p>
     </div>
 
-    <div class="container new task">
+    <div
+      v-if="!$route.query.access || $route.query.access == 'Полный доступ'"
+      class="container new task"
+    >
       <h3>Новая задача</h3>
       <div>
         <input
@@ -33,10 +36,39 @@
       <button type="button" class="button" @click="createTask">Создать</button>
     </div>
 
+    <div v-if="!$route.query.access" class="invitations">
+      <div class="new invitation">
+        <RouterLink to="/profile/search?mode=invitation" class="button">
+          <img src="../assets/img/add.svg" alt="Пригласить" />
+          <p class="fio">Пригласить</p>
+        </RouterLink>
+      </div>
+
+      <div
+        v-for="invitation in data.groupInfo.invitations"
+        :key="invitation.UUID"
+        class="button invitation"
+        @click="deleteInvitation(invitation.UUID)"
+      >
+        <img
+          v-if="invitation.invitationUser.userProfile.photoUrl"
+          :src="invitation.invitationUser.userProfile.photoUrl"
+          alt="Фото профиля"
+        />
+        <img v-else src="../assets/img/default.svg" alt="Фото профиля" />
+        <p class="fio" :title="invitation.invitationAccess.description">
+          {{ invitation.invitationUser.userProfile.lastName }}
+          {{ invitation.invitationUser.userProfile.firstName }}
+          ({{ invitation.invitationAccess.name }})
+        </p>
+      </div>
+    </div>
+
     <div class="container list">
       <h3 v-if="!data.groupInfo.group.groupTasks.length">
         Кажется, тут еще нет никаких задач...
       </h3>
+
       <div
         v-else
         v-for="task in data.groupInfo.group.groupTasks"
@@ -92,13 +124,35 @@
               )
             }}сек.
           </p>
+          <div class="subtasks">
+            <select name="" id="" @click="getSubtasks(task.UUID)">
+              <option value="" disabled selected>Подзадачи</option>
+              <option v-for="subtask in data.subtasks" :key="subtask.UUID">
+                {{ subtask.name }}
+              </option>
+            </select>
+            <button
+              v-if="
+                !$route.query.access || $route.query.access == 'Полный доступ'
+              "
+              type="button"
+              class="button"
+              @click="createSubtask(task.UUID)"
+            >
+              <img src="../assets/img/add.svg" alt="" />
+            </button>
+          </div>
         </div>
         <div class="info">
           <p>{{ task.description }}</p>
         </div>
         <div class="info">
           <select
-            v-if="+new Date(task.deadlineISO) - data.time > 0"
+            v-if="
+              (!$route.query.access ||
+                $route.query.access !== 'Только чтение') &&
+              +new Date(task.deadlineISO) - data.time > 0
+            "
             v-model="task.statusUUID"
             @change="changeTaskStatus(task)"
           >
@@ -116,11 +170,11 @@
     </div>
   </div>
 </template>
-  
+
 <script setup>
 import { computed, reactive, onMounted } from "vue";
 import HeaderPanel from "../components/HeaderPanel.vue";
-import { useRoute } from "vue-router";
+import { RouterLink, useRoute } from "vue-router";
 
 const route = useRoute();
 
@@ -133,6 +187,7 @@ var newTask = reactive({
 const data = reactive({
   groupInfo: {},
   statuses: [],
+  subtasks: [],
   time: new Date(),
 });
 
@@ -168,7 +223,14 @@ function createTask() {
         "Content-Type": "application/json",
       },
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (res.status < 300) {
+          return res.json();
+        } else {
+          const message = await res.json();
+          throw new Error(message);
+        }
+      })
       .then((json) => {
         data.groupInfo.group.groupTasks.push(json);
         newTask = reactive({
@@ -177,7 +239,9 @@ function createTask() {
           deadlineISO: "",
         });
       })
-      .catch((err) => alert(err.message));
+      .catch((err) => {
+        alert(err.message);
+      });
   }
 }
 
@@ -190,7 +254,80 @@ function changeTaskStatus(task) {
     headers: {
       "Content-Type": "application/json",
     },
-  }).catch((err) => alert(err.message));
+  })
+    .then(async (res) => {
+      if (res.status < 300) {
+        return res.json();
+      } else {
+        const message = await res.json();
+        throw new Error(message);
+      }
+    })
+    .catch((err) => alert(err.message));
+}
+
+function deleteInvitation(UUID) {
+  if (
+    confirm(
+      "Вы уверены, что хотите удалить этого пользователя из рабочего пространства?"
+    )
+  ) {
+    fetch(`https://taski-helper.mooo.com/api/invitations/${UUID}`, {
+      method: "DELETE",
+    })
+      .then(async (res) => {
+        if (res.status < 300) {
+          return res.json();
+        } else {
+          const message = await res.json();
+          throw new Error(message);
+        }
+      })
+      .then(
+        (res) =>
+          (data.groupInfo.invitations = data.groupInfo.invitations.filter(
+            (item) => item.UUID !== UUID
+          ))
+      )
+      .catch((err) => alert(err.message));
+  }
+}
+
+function getSubtasks(uuid) {
+  fetch(`https://taski-helper.mooo.com/api/subtasks/${uuid}`)
+    .then((res) => res.json())
+    .then((json) => (data.subtasks = json))
+    .catch((err) => alert(err.message));
+}
+
+function createSubtask(uuid) {
+  const name = prompt("Введите название подзадачи", "Новая подзадача");
+  const description = prompt("Введите описание подзадачи", "Описание...");
+  if (name && description) {
+    fetch(`https://taski-helper.mooo.com/api/subtasks/${uuid}`, {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        description: description,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          alert("Подзадача добавлена!");
+        } else {
+          const message = await res.json();
+          console.log(message);
+
+          throw new Error(message);
+        }
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  }
 }
 </script>
   
@@ -275,7 +412,8 @@ textarea {
   flex-wrap: wrap;
 }
 
-.card > img {
+.card > img,
+.invitation img {
   @include GlassBackground;
   width: 50px;
   height: 50px;
@@ -288,5 +426,56 @@ textarea {
 
 .time {
   font-weight: 700;
+}
+
+.invitations {
+  @include GlassBackground;
+  @include Flex-HS;
+  padding: 5px;
+  justify-content: flex-start;
+  min-height: 75px;
+}
+
+.invitations > * {
+  @include GlassBackground;
+  width: 65px;
+  min-height: 65px;
+  overflow-x: auto;
+}
+
+.invitation {
+  @include Flex-C;
+  padding: 2px;
+}
+
+.invitation.button {
+  height: 100%;
+  padding: 2px;
+  &:hover {
+    background: $transparent-orange;
+  }
+}
+
+.fio {
+  font-size: x-small;
+  text-align: center;
+}
+
+.invitation > .button {
+  width: 100%;
+  height: 100%;
+}
+
+.subtasks {
+  @include Flex-HS;
+}
+
+.subtasks select {
+  flex: 1;
+}
+
+.subtasks .button {
+  width: 30px;
+  flex: 0 1 30px;
 }
 </style>
