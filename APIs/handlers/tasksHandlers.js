@@ -12,67 +12,69 @@ module.exports.createTask = async function (req, res) {
             groupUUID
         } = req.body;
     
-        const group = await db.Groups.findOne({
-            where: {
-                UUID: groupUUID
-            },
-            include: {
-                attributes: [ 'credentialsUUID' ],
-                model: db.Invitations,
-                as: 'groupInvitations',
-                include: {
-                    model: db.Credentials,
-                    as: 'invitationUser',
-                    include: {
-                        attributes: [ 'email' ],
-                        model: db.Profiles,
-                        as: 'userProfile'
-                    }
-                }
-            }
-        })
+        // const group = await db.Groups.findOne({
+        //     where: {
+        //         UUID: groupUUID
+        //     },
+        //     include: {
+        //         attributes: [ 'credentialsUUID' ],
+        //         model: db.Invitations,
+        //         as: 'groupInvitations',
+        //         include: [{
+        //             model: db.Credentials,
+        //             as: 'invitationUser',
+        //             include: {
+        //                 attributes: [ 'email' ],
+        //                 model: db.Profiles,
+        //                 as: 'userProfile',
+        //             }
+        //         }, {
+        //             model: db.Accesses,
+        //             as: 'invitationAccess',
+        //         }]
+        //     }
+        // })
     
-        const filePaths = req.files?.['file']?.map(file => file.path) || [];
+        // const filePaths = req.files?.['file']?.map(file => file.path) || [];
     
-        if (!group) {
-            delpdf(filePaths)
-            .then(() => {
-                console.log('Files deleted successfully');
-            })
-            .catch(error => {
-                console.error('Error deleting files:', error);
-            });
-            res.status(404).json('Группа не найдена');
-            return;
-        }
-        if (group.credentialsUUID != res.locals.UUID) {
-            delpdf(filePaths)
-            .then(() => {
-                console.log('Files deleted successfully');
-            })
-            .catch(error => {
-                console.error('Error deleting files:', error);
-            });
-            res.status(403).json('У вас недостаточно прав для создания задачи в этой группе');
-            return;
-        }
-    
-        if (res.locals.multerError) {
-            delpdf(filePaths)
-            .then(() => {
-                console.log('Files deleted successfully');
-            })
-            .catch(error => {
-                console.error('Error deleting files:', error);
-            });
-            res.status(500).json(res.locals.multerError);
-        }
+        // if (!group) {
+        //     delpdf(filePaths)
+        //     .then(() => {
+        //         console.log('Files deleted successfully');
+        //     })
+        //     .catch(error => {
+        //         console.error('Error deleting files:', error);
+        //     });
+        //     res.status(404).json('Группа не найдена');
+        //     return;
+        // }
+        // if (res.locals.multerError) {
+        //     delpdf(filePaths)
+        //     .then(() => {
+        //         console.log('Files deleted successfully');
+        //     })
+        //     .catch(error => {
+        //         console.error('Error deleting files:', error);
+        //     });
+        //     res.status(500).json(res.locals.multerError);
+        // }
+        // if (group.groupInvitations[0].invitationAccess.name in ['Только чтение', 'Только выполнение']) {
+        //     delpdf(filePaths)
+        //     .then(() => {
+        //         console.log('Files deleted successfully');
+        //     })
+        //     .catch(error => {
+        //         console.error('Error deleting files:', error);
+        //     });
+        //     res.status(403).json('У вас недостаточно прав для создания задачи в этой группе');
+        //     return;
+        // }
     
         const task = await db.Tasks.create({
             name: name,
             description: description,
             deadlineISO: deadlineISO,
-            fileLink: JSON.stringify(filePaths),
+            // fileLink: JSON.stringify(filePaths),
             statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
             authorUUID: res.locals.UUID,
             groupUUID: groupUUID
@@ -270,7 +272,7 @@ module.exports.changeTask = function (req, res) {
                 res.status(403).json('У вас недостаточно прав на редактирование');
                 return;
             }
-            if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Чтение') {
+            if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Только чтение') {
                 res.status(403).json('У вас недостаточно прав на редактирование');
                 return;
             }
@@ -289,24 +291,24 @@ module.exports.changeTask = function (req, res) {
                     res.status(500).json(err.message);
                 });
             }
-        }
-        else {
-            db.Tasks.update({
-                name: req.body.name,
-                description: req.body.description,
-                deadlineISO: req.body.deadlineISO,
-                statusUUID: req.body.statusUUID,
-            }, {
-                where: {
-                    UUID: taskUUID
-                }
-            })
-            .then(() => {
-                res.status(200).json('Задача изменена');
-            })
-            .catch(err => {
-                res.status(500).json(err.message);
-            });
+            if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Полный доступ') {
+                db.Tasks.update({
+                    name: req.body.name,
+                    description: req.body.description,
+                    deadlineISO: req.body.deadlineISO,
+                    statusUUID: req.body.statusUUID,
+                }, {
+                    where: {
+                        UUID: taskUUID
+                    }
+                })
+                .then(() => {
+                    res.status(200).json('Задача изменена');
+                })
+                .catch(err => {
+                    res.status(500).json(err.message);
+                });
+            }
         }
     })
     .catch(err => {

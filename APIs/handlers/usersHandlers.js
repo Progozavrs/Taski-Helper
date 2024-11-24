@@ -36,34 +36,32 @@ module.exports.getMyProfile = function (req, res) {
 }
 
 module.exports.findCredentials = function (req, res) {
-    const firstName = req.query.firstName;
-    const lastName = req.query.lastName;
-    db.Profiles.findOne({
+    const searchLine = req.body.searchLine;
+    const searchWords = searchLine.split(' ');
+    db.Profiles.findAll({
         where: {
-            firstName: {
-                [db.Op.like]: `%${firstName}%`
-            },
-            lastName: {
-                [db.Op.like]: `%${lastName}%`
-            }
+            [db.Op.or]: searchWords.map(word => ({
+                [db.Op.or]: [
+                    {
+                        firstName: {
+                            [db.Op.like]: `%${word}%`
+                        }
+                    },
+                    {
+                        lastName: {
+                            [db.Op.like]: `%${word}%`
+                        }
+                    }
+                ]
+            }))
         },
         include: {
             model: db.Credentials,
             as: 'userCredentials',
         }
     })
-    .then(user => {
-        if (user) {
-            res.json({
-                user: user,
-                message: "OK"
-            });
-        } 
-        else {
-            res.json({
-                user: null,
-                message: 'Пользователь с такими ФИ не найден' 
-            });
-        }
+    .then(users => {
+        res.json(users);
     })
+
 }

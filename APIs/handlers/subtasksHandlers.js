@@ -3,7 +3,7 @@ const db = require('../../database/index');
 module.exports.getSubtasks = function (req, res) {
     db.Tasks.findOne({
         where: {
-            UUID: req.body.taskUUID,
+            UUID: req.params.taskUUID,
         },
         include: [{
             model: db.Subtasks,
@@ -15,7 +15,7 @@ module.exports.getSubtasks = function (req, res) {
         }]
     })
     .then((task) => {
-        res.status(200).send(task.subtasks);
+        res.status(200).json(task.taskSubtasks);
     })
     .catch((err) => {
         res.status(500).json({ error: err.message });
@@ -25,67 +25,60 @@ module.exports.getSubtasks = function (req, res) {
 module.exports.createSubtask = async function (req, res) {
     const { taskUUID } = req.params;
 
-    const task = await db.Tasks.findOne({
-        where: {
-            UUID: taskUUID,
-        }
-    })
+    // const task = await db.Tasks.findOne({
+    //     where: {
+    //         UUID: taskUUID,
+    //     }
+    // })
 
-    const filePaths = req.files?.['file']?.map(file => file.path) || [];
+    // const filePaths = req.files?.['file']?.map(file => file.path) || [];
 
-
-    if (!task) {
-        delpdf(filePaths)
-        .then(() => {
-            console.log('Files deleted successfully');
-        })
-        .catch(error => {
-            console.error('Error deleting files:', error);
-        });
-        return res.status(404).json({
-            error: 'Задача не найдена'
-        });
-    }
-    if (task.authorUUID !== req.user.UUID) {
-        delpdf(filePaths)
-        .then(() => {
-            console.log('Files deleted successfully');
-        })
-        .catch(error => {
-            console.error('Error deleting files:', error);
-        });
-        return res.status(403).json({
-            error: 'Вы не являетесь автором задачи'
-        });
-    }
-    if (res.locals.multerError) {
-        delpdf(filePaths)
-        .then(() => {
-            console.log('Files deleted successfully');
-        })
-        .catch(error => {
-            console.error('Error deleting files:', error);
-        });
-        res.status(500).json(res.locals.multerError);
-    }
+    // if (!task) {
+    //     delpdf(filePaths)
+    //     .then(() => {
+    //         console.log('Files deleted successfully');
+    //     })
+    //     .catch(error => {
+    //         console.error('Error deleting files:', error);
+    //     });
+    //     return res.status(404).json({
+    //         error: 'Задача не найдена'
+    //     });
+    // }
+    // if (task.authorUUID !== req.user.UUID) {
+    //     delpdf(filePaths)
+    //     .then(() => {
+    //         console.log('Files deleted successfully');
+    //     })
+    //     .catch(error => {
+    //         console.error('Error deleting files:', error);
+    //     });
+    //     return res.status(403).json({
+    //         error: 'Вы не являетесь автором задачи'
+    //     });
+    // }
+    // if (res.locals.multerError) {
+    //     delpdf(filePaths)
+    //     .then(() => {
+    //         console.log('Files deleted successfully');
+    //     })
+    //     .catch(error => {
+    //         console.error('Error deleting files:', error);
+    //     });
+    //     res.status(500).json(res.locals.multerError);
+    // }
 
     db.Subtasks.create({
-        UUID: req.body.subtaskUUID,
         name: req.body.name,
         description: req.body.description,
-        fileLink: JSON.stringify(filePaths),
-        statusUUID: req.body.statusUUID,
-        taskUUID: req.body.taskUUID,
+        statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
+        taskUUID: taskUUID,
     })
     .then(new_subtask => {
-        res.status(200).json({
-            subtask: new_subtask
-        });
+        res.status(200).send();
     })
     .catch((err) => {
-        res.status(500).json({ 
-            error: err.message 
-        });
+        res.status(500).json(err.message);
     });
 }
 
