@@ -125,11 +125,11 @@ module.exports.updateGroup = function (req, res) {
     })
     .then(group => {
         if (!group) {
-            res.status(404).send('Группа не найдена');
+            res.status(404).json('Группа не найдена');
             return;
         }
         if (group.credentialsUUID != res.locals.UUID) {
-            res.status(403).send('У вас недостаточно прав на редактирование');
+            res.status(403).json('У вас недостаточно прав на редактирование');
             return;
         }
         db.Groups.update({
@@ -141,7 +141,7 @@ module.exports.updateGroup = function (req, res) {
             }
         })
         .then(() => {
-            res.status(200).send('Группа обновлена');
+            res.status(200).json('Группа обновлена');
         })
         .catch(err => {
             res.status(500).json(err.message);

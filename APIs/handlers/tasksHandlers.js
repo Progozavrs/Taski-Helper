@@ -42,7 +42,7 @@ module.exports.createTask = async function (req, res) {
             .catch(error => {
                 console.error('Error deleting files:', error);
             });
-            res.status(404).send('Группа не найдена');
+            res.status(404).json('Группа не найдена');
             return;
         }
         if (group.credentialsUUID != res.locals.UUID) {
@@ -53,7 +53,7 @@ module.exports.createTask = async function (req, res) {
             .catch(error => {
                 console.error('Error deleting files:', error);
             });
-            res.status(403).send('У вас недостаточно прав для создания задачи в этой группе');
+            res.status(403).json('У вас недостаточно прав для создания задачи в этой группе');
             return;
         }
     
@@ -68,11 +68,11 @@ module.exports.createTask = async function (req, res) {
             res.status(500).json(res.locals.multerError);
         }
     
-        const new_task = await db.Tasks.create({
+        const task = await db.Tasks.create({
             name: name,
             description: description,
             deadlineISO: deadlineISO,
-            fileLink: stringify(filePaths),
+            fileLink: JSON.stringify(filePaths),
             statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
             authorUUID: res.locals.UUID,
             groupUUID: groupUUID
@@ -86,25 +86,25 @@ module.exports.createTask = async function (req, res) {
         });
         const status = await task.getTaskStatus();
 
-        const emails = [author.userProfile.email, group.groupInvitations.map(invitation => invitation.invitationUser.userProfile.email)];
-
-        const transporter = mail.transporter;
-        const mailOptions = {
-            from: mail.config.from,
-            to: emails,
-            subject: `Создана новая задача "${name}"`,
-            text: `Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.`,
-            html: `<h1>Создана новая задача "${name}"</h1>
-                <p>Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.</p>`
-        }
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log('Message sent: %s', info.messageId);
+        const emails = [group.groupInvitations.map(invitation => invitation.invitationUser.userProfile?.email)];
+        if (emails[0]) {
+            const transporter = mail.transporter;
+            const mailOptions = {
+                from: mail.config.from,
+                to: emails,
+                subject: `Создана новая задача "${name}"`,
+                text: `Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.`,
+                html: `<h1>Создана новая задача "${name}"</h1>
+                    <p>Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.</p>`
             }
-        });
-    
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log('Message sent: %s', info.messageId);
+                }
+            });
+        }
         res.status(201).json({
             ...task.dataValues,
             taskAuthor: author,
@@ -262,16 +262,16 @@ module.exports.changeTask = function (req, res) {
     })
     .then(task => {
         if (!task) {
-            res.status(404).send('Задача не найдена');
+            res.status(404).json('Задача не найдена');
             return;
         }
         if (task.authorUUID != res.locals.UUID) {
             if (task.taskGroup.groupInvitations.length === 0) {
-                res.status(403).send('У вас недостаточно прав на редактирование');
+                res.status(403).json('У вас недостаточно прав на редактирование');
                 return;
             }
             if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Чтение') {
-                res.status(403).send('У вас недостаточно прав на редактирование');
+                res.status(403).json('У вас недостаточно прав на редактирование');
                 return;
             }
             if (task.taskGroup.groupInvitations[0].invitationAccess.name === 'Только выполнение') {
@@ -283,7 +283,7 @@ module.exports.changeTask = function (req, res) {
                     }
                 })
                 .then(() => {
-                    res.status(200).send('Статус задачи изменен');
+                    res.status(200).json('Статус задачи изменен');
                 })
                 .catch(err => {
                     res.status(500).json(err.message);
@@ -302,7 +302,7 @@ module.exports.changeTask = function (req, res) {
                 }
             })
             .then(() => {
-                res.status(200).send('Задача изменена');
+                res.status(200).json('Задача изменена');
             })
             .catch(err => {
                 res.status(500).json(err.message);

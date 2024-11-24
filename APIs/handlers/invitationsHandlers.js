@@ -50,26 +50,29 @@ module.exports.createInvitation = async function (req, res) {
         });
 
         // Подготовка письма
-        const transporter = mail.transporter;
-        const mailOptions = {
-            from: mail.config.from,
-            to: [group.groupOwner.userProfile.email, target.email],
-            subject: `Пользователь ${target.lastName} ${target.firstName} добавлен в группу "${group.name}" пользователя ${group.groupOwner.userProfile.lastName} ${group.groupOwner.userProfile.firstName}`,
-            text: `${target.lastName} ${target.firstName} теперь обладает правами "${access.name}" в группе ${group.name}. Управлять данным приглашением можно через ЛК.\nХорошего дня!`,
-            html: `<h1>Пользователь ${target.lastName} ${target.firstName} добавлен в группу "${group.name}" пользователя ${group.groupOwner.userProfile.lastName} ${group.groupOwner.userProfile.firstName}</h1>
-                <p>${target.lastName} ${target.firstName} теперь обладает правами "${access.name}" в группе ${group.name}. Управлять данным приглашением можно через ЛК.</p>
-                <p>Хорошего дня!</p>`
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log(error);
-            } else {
-                console.log('Message sent: %s', info.messageId);
-            }
+        const emails = [target?.email];
+        if (emails[0]) {
+            const transporter = mail.transporter;
+            const mailOptions = {
+                from: mail.config.from,
+                to: emails,
+                subject: `Пользователь ${target.lastName} ${target.firstName} добавлен в группу "${group.name}" пользователя ${group.groupOwner.userProfile.lastName} ${group.groupOwner.userProfile.firstName}`,
+                text: `${target.lastName} ${target.firstName} теперь обладает правами "${access.name}" в группе ${group.name}. Управлять данным приглашением можно через ЛК.\nХорошего дня!`,
+                html: `<h1>Пользователь ${target.lastName} ${target.firstName} добавлен в группу "${group.name}" пользователя ${group.groupOwner.userProfile.lastName} ${group.groupOwner.userProfile.firstName}</h1>
+                    <p>${target.lastName} ${target.firstName} теперь обладает правами "${access.name}" в группе ${group.name}. Управлять данным приглашением можно через ЛК.</p>
+                    <p>Хорошего дня!</p>`
+            };
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log('Message sent: %s', info.messageId);
+                }
+            });
+        }
+        res.status(200).json({ 
+            invitation: invitation 
         });
-
-        res.status(200).json({ invitation: invitation });
     } 
     catch (error) {
         res.status(500).json({ error: error.message });
