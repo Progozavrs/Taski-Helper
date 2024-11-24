@@ -2,13 +2,13 @@ const router = require('express').Router();
 const tasksHandlers = require('../handlers/tasksHandlers');
 const multer = require('../../multer');
 
-router.post('/', tasksHandlers.createTask);
+router.post('/', multer.fileUploader, multer.errorHandler, tasksHandlers.createTask);
 
 router.get('/my', tasksHandlers.getMyTasks);
 
 router.get('/:groupUUID', tasksHandlers.getGroupTasks);
 
-router.post('/upload', tasksHandlers.beforeUploadFile, multer.fileUploader, multer.errorHandler, tasksHandlers.afterUploadFile);
+router.post('/upload', multer.fileUploader, multer.errorHandler, tasksHandlers.attachFile);
 
 router.put('/:taskUUID', tasksHandlers.changeTask);
 

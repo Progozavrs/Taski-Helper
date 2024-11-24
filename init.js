@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const bodyParser = require('body-parser');
 const path = require("path");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
@@ -33,6 +34,7 @@ init.use(cors(corsOptions));
 // Настройка Express-приложения
 init.use(express.json());
 init.use(express.urlencoded({ extended: true }));
+init.use(bodyParser.urlencoded({ extended: true }));
 init.use(cookieParser(process.env.COOKIE_KEY));
 init.use(session({
     secret: process.env.SESSION_KEY,
@@ -44,6 +46,7 @@ init.use(session({
     resave: true,
     saveUninitialized: true,
 }));
+init.use(auths.passport.initialize());
 init.use(auths.passport.authenticate("session"));
 
 // Подключение роутера авторизации
