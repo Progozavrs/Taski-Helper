@@ -70,6 +70,7 @@
   }
 
   &:active,
+  &.router-link-active,
   &.active {
     background: $transparent-orange;
     opacity: 0.8;

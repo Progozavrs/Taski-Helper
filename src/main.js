@@ -6,7 +6,9 @@ import { createWebHistory, createRouter } from "vue-router";
 import Login from "./pages/Login.vue";
 import Profile from "./pages/Profile.vue";
 import OtherProfile from "./pages/OtherProfile.vue";
+import SearchProfile from "./pages/SearchProfile.vue";
 import Group from "./pages/Group.vue";
+import Groups from "./pages/Groups.vue";
 
 const cookieObj = new URLSearchParams(
   document.cookie.replaceAll("&", "%26").replaceAll("; ", "&")
@@ -20,21 +22,41 @@ const routes = [
   },
   {
     path: "/profile",
-    name: "myProfile",
-    component: Profile,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "myProfile",
+        component: Profile,
+      },
+      {
+        path: ":uuid",
+        name: "otherProfile",
+        component: OtherProfile,
+      },
+    ],
+  },
+  {
+    path: "/profile/search",
+    name: "searchProfile",
+    component: SearchProfile,
     meta: { requiresAuth: true },
   },
   {
-    path: "/profile/:uuid",
-    name: "otherProfile",
-    component: OtherProfile,
+    path: "/group",
     meta: { requiresAuth: true },
-  },
-  {
-    path: "/group/:uuid",
-    name: "group",
-    component: Group,
-    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "",
+        name: "groups",
+        component: Groups,
+      },
+      {
+        path: ":uuid",
+        name: "group",
+        component: Group,
+      },
+    ],
   },
 ];
 
