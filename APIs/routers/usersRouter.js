@@ -5,6 +5,6 @@ router.get('/:uuid', usersHandlers.getProfile);
 
 router.get('/', usersHandlers.getMyProfile);
 
-router.get('/find', usersHandlers.findCredentials);
+router.post('/find', usersHandlers.findCredentials);
 
 module.exports = router;

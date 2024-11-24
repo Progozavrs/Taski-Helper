@@ -7,12 +7,14 @@ const groupsRouter = require('./routers/groupsRouter');
 const invitationsRouter = require('./routers/invitationsRouter');
 const tasksRouter = require('./routers/tasksRouter');
 const variousRouter = require('./routers/variousRouter');
+const subtasksRouter = require('./routers/subtasksRouter');
 
 mainAPI.use('/users', usersRouter);
 mainAPI.use('/groups', groupsRouter);
 mainAPI.use('/invitations', invitationsRouter);
 mainAPI.use('/tasks', tasksRouter);
 mainAPI.use('/vars', variousRouter);
+mainAPI.use('/subtasks', subtasksRouter);
 
 mainAPI.get('/', (req, res) => {
     res.send('Main API works');
