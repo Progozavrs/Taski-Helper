@@ -1,18 +1,82 @@
+const { stringify } = require('uuid');
 const db = require('../../database/index');
-const fs = require('fs');
-const path = require('path');
+const delpdf = require('./variousHandlers').deleteUploadedPdfs;
+const mail = require('../mail');
 
-module.exports.createTask = function (req, res) {
-    db.Tasks.create({
-        name: req.body.name,
-        description: req.body.description,
-        deadlineISO: req.body.deadlineISO,
-        fileLink: null,
-        statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
-        authorUUID: res.locals.UUID,
-        groupUUID: req.body.groupUUID
-    })
-    .then(async task => {
+module.exports.createTask = async function (req, res) {
+    try {
+        const {
+            name,
+            description,
+            deadlineISO,
+            groupUUID
+        } = req.body;
+    
+        const group = await db.Groups.findOne({
+            where: {
+                UUID: groupUUID
+            },
+            include: {
+                attributes: [ 'credentialsUUID' ],
+                model: db.Invitations,
+                as: 'groupInvitations',
+                include: {
+                    model: db.Credentials,
+                    as: 'invitationUser',
+                    include: {
+                        attributes: [ 'email' ],
+                        model: db.Profiles,
+                        as: 'userProfile'
+                    }
+                }
+            }
+        })
+    
+        const filePaths = req.files?.['file']?.map(file => file.path) || [];
+    
+        if (!group) {
+            delpdf(filePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            res.status(404).send('Группа не найдена');
+            return;
+        }
+        if (group.credentialsUUID != res.locals.UUID) {
+            delpdf(filePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            res.status(403).send('У вас недостаточно прав для создания задачи в этой группе');
+            return;
+        }
+    
+        if (res.locals.multerError) {
+            delpdf(filePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            res.status(500).json(res.locals.multerError);
+        }
+    
+        const new_task = await db.Tasks.create({
+            name: name,
+            description: description,
+            deadlineISO: deadlineISO,
+            fileLink: stringify(filePaths),
+            statusUUID: "cabd88f8-a9a3-11ef-af6a-3cecef0f521e", // Назначено
+            authorUUID: res.locals.UUID,
+            groupUUID: groupUUID
+        })
         const author = await task.getTaskAuthor({
             attributes: [ 'UUID' ],
             include: {
@@ -21,15 +85,35 @@ module.exports.createTask = function (req, res) {
             }
         });
         const status = await task.getTaskStatus();
-        res.status(200).json({
+
+        const emails = [author.userProfile.email, group.groupInvitations.map(invitation => invitation.invitationUser.userProfile.email)];
+
+        const transporter = mail.transporter;
+        const mailOptions = {
+            from: mail.config.from,
+            to: emails,
+            subject: `Создана новая задача "${name}"`,
+            text: `Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.`,
+            html: `<h1>Создана новая задача "${name}"</h1>
+                <p>Задача "${name}" была создана пользователем ${author.userProfile.lastName} ${author.userProfile.firstName} в группе ${group.name}.</p>`
+        }
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Message sent: %s', info.messageId);
+            }
+        });
+    
+        res.status(201).json({
             ...task.dataValues,
             taskAuthor: author,
             taskStatus: status
         });
-    })
-    .catch(err => {
+    }
+    catch (err) {
         res.status(500).json(err.message);
-    });
+    };
 }
 
 module.exports.getMyTasks = function (req, res) {
@@ -80,85 +164,77 @@ module.exports.getGroupTasks = function (req, res) {
     });
 }
 
-module.exports.beforeUploadFile = function (req, res, next) {
-    db.Tasks.findOne({
-        where: {
-            UUID: req.body.taskUUID
-        }
-    })
-    .then(task => {
+module.exports.attachFile = async function (req, res) {
+    try {
+        const { taskUUID } = req.params;
+
+        // Получаем данные задачи из базы данных
+        const task = await db.Tasks.findOne({
+            where: { 
+                UUID: taskUUID 
+            }
+        });
+
+        const newFilePaths = req.files?.['file']?.map(file => file.path) || [];
+
         if (!task) {
-            res.status(404).send('Задача не найдена');
-            return;
+            delpdf(newFilePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            return res.status(404).json({ message: 'Задача не найдена' });
+        }
+        if (task.credentialsUUID !== res.locals.UUID) {
+            delpdf(newFilePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            return res.status(403).json({ message: 'У вас недостаточно прав для обновления этой задачи' });
+        }
+        if (res.locals.multerError) {
+            delpdf(newFilePaths)
+            .then(() => {
+                console.log('Files deleted successfully');
+            })
+            .catch(error => {
+                console.error('Error deleting files:', error);
+            });
+            res.status(500).json(res.locals.multerError);
         }
 
-        if (task.authorUUID != res.locals.UUID) {
-            res.status(403).send('Вы не являетесь автором этой задачи');
-            return;
-        }
+        const existingFilePaths = JSON.parse(task.fileLink) || [];
 
-        // Проверка, что файлы уже были загружены
-        // TODO - Сделать проверку что файлов <= 5, и потом обновлять список
-        if (task.fileLink && JSON.parse(task.fileLink).length > 0) { 
-            res.status(403).send('Файлы уже были загружены, нельзя добавлять новые файлы');
-            return;
-        }
-
-        next();
-    })
-    .catch(err => {
-        res.status(500).json(err.message);
-    });
-}
-
-module.exports.afterUploadFile = function (req, res) {
-    const errorsArray = [];
-
-    // Проверка наличия ошибок multer
-    if (res.locals.multerError) {
-        if (req.files?.['file']) {
-            req.files['file'].forEach(file => {
-                fs.unlink(file.path, (err) => {
-                    if (err) console.error('Ошибка при удалении файла:', err);
-                });
+        if (existingFilePaths.length + newFilePaths.length > 5) {
+            await delpdf(newFilePaths);
+            return res.status(400).json({ 
+                error: 'Общее количество файлов не должно превышать 5' 
             });
         }
-        res.status(500).json(res.locals.multerError);
-        return;
-    }
+        
+        const allFilePaths = existingFilePaths.concat(newFilePaths);
+        const filePaths = stringify(allFilePaths);
 
-    // Проверка наличия загруженных файлов
-    if (!req.files?.['file'] || req.files['file'].length === 0) {
-        errorsArray.push('Файлы не были отправлены на сервер');
-        res.status(422).json({ errors: errorsArray });
-        return;
-    }
+        await db.Tasks.update({
+            fileLink: filePaths
+        }, {
+            where: { 
+                UUID: taskUUID 
+            }
+        })
 
-    const filePaths = req.files['file'].map(file => file.path);
-
-    // Обновление записи в базе данных
-    db.Tasks.update({
-        fileLink: JSON.stringify(filePaths)
-    }, {
-        where: {
-            UUID: req.body.taskUUID
-        }
-    })
-    .then(() => {
-        res.status(200).json({
-            filePaths: filePaths
+        res.status(200).json({ 
+            filePaths 
         });
-    })
-    .catch(err => {
-        // Удаление файлов в случае ошибки
-        req.files['file'].forEach(file => {
-            fs.unlink(file.path, (unlinkErr) => {
-                if (unlinkErr) console.error('Ошибка при удалении файла:', unlinkErr);
-            });
-        });
-        errorsArray.push('Ошибка при сохранении путей файлов в базе данных');
-        res.status(500).json({ errors: errorsArray, dbError: err });
-    });
+    } catch (error) {
+        console.error('Error updating task:', error);
+        res.status(500).json({ error: error.message });
+    }
 };
 
 module.exports.changeTask = function (req, res) {

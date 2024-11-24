@@ -1,4 +1,6 @@
 const db = require('../../database/index');
+const fs = require('fs').promises;
+const path = require('path');
 
 module.exports.getAllAccesses = function (req, res) {
     db.Accesses.findAll()
@@ -34,3 +36,20 @@ module.exports.updateStatusByDeadlineISO = function () {
         console.error('Error updating tasks:', error);
     });
 }
+
+module.exports.deleteUploadedPdfs = function (paths) {
+    return Promise.all(paths.map(async (filePath) => {
+        try {
+            const absolutePath = path.resolve(__dirname, filePath);
+            await fs.unlink(absolutePath);
+            console.log(`Deleted file: ${absolutePath}`);
+        } 
+        catch (error) {
+            if (error.code !== 'ENOENT') {
+                // Игнорируем ошибку, если файл не найден
+                console.error(`Error deleting file ${filePath}:`, error);
+                throw error;
+            }
+        }
+    }));
+};
